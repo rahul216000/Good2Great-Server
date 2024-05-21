@@ -4,7 +4,9 @@ const dotenv = require("dotenv");
 const PORT = process.env.PORT || 3000;
 const cors = require('cors');
 const fs = require('fs');
-const pdf = require("pdf-creator-node");
+// const pdf = require("pdf-creator-node");
+const pdf = require('html-pdf');
+
 const crypto = require('crypto');
 
 
@@ -28,12 +30,11 @@ app.post("/request-quote", async (req, res) => {
 
     try {
 
-        let {email, ValuesArr} = req.body;
+        let { email, ValuesArr } = req.body;
 
         let ProcessID = generateSecureString()
-        let GeneratePdf = await BuildPdf(ProcessID, ValuesArr)
-        await SendEmailWithAttachment(email, ProcessID)
-        await DeleteReportPDF(ProcessID)
+        let GeneratePdf = await BuildPdf(email, ProcessID, ValuesArr)
+        
 
         res.send("Sent")
 
@@ -158,7 +159,7 @@ async function SendEmailWithAttachment(email, ProcessID) {
 
 }
 
-async function BuildPdf(ProcessID, ValuesArr) {
+async function BuildPdf(email, ProcessID, ValuesArr) {
 
     var html = `
 <!DOCTYPE html>
@@ -476,34 +477,43 @@ async function BuildPdf(ProcessID, ValuesArr) {
 </body>
 </html>
 `
-    var options = {
-        format: "A3",
-        orientation: "portrait",
-        border: "10mm",
-    };
+    // var options = {
+    //     format: "A3",
+    //     orientation: "portrait",
+    //     border: "10mm",
+    // };
 
-    var users = [
-        {
-            name: "Shyam",
-            age: "26",
-        }
-    ];
+    // var users = [
+    //     {
+    //         name: "Shyam",
+    //         age: "26",
+    //     }
+    // ];
 
-    var document = {
-        html: html,
-        data: {
-            users: users,
-        },
-        path: `./Reports/${ProcessID}.pdf`,
-        type: "",
-    };
+    // var document = {
+    //     html: html,
+    //     data: {
+    //         users: users,
+    //     },
+    //     path: `./Reports/${ProcessID}.pdf`,
+    //     type: "",
+    // };
 
-    console.log(`Here till ok`);
-    await pdf.create(document, options)
+    // console.log(`Here till`);
+    // await pdf.create(document, options)
+
+
+    const options = { format: 'A4' };
+
+    pdf.create(html, options).toFile(`./Reports/${ProcessID}.pdf`, async function (err, res) {
+        if (err) return console.log(err);
+        await SendEmailWithAttachment(email, ProcessID)
+        await DeleteReportPDF(ProcessID)
+    });
 
 }
 
-async function DeleteReportPDF(ProcessID){
+async function DeleteReportPDF(ProcessID) {
     fs.unlinkSync(`./Reports/${ProcessID}.pdf`);
 }
 
