@@ -498,6 +498,7 @@ async function BuildPdf(ProcessID, ValuesArr) {
         type: "",
     };
 
+    console.log(`Here till ok`);
     await pdf.create(document, options)
 
 }
