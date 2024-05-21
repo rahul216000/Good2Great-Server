@@ -3,9 +3,10 @@ const app = express();
 const dotenv = require("dotenv");
 const PORT = process.env.PORT || 3000;
 const cors = require('cors');
+const PDFDocument = require('pdfkit');
 const fs = require('fs');
 // const pdf = require("pdf-creator-node");
-const pdf = require('html-pdf');
+// const pdf = require('html-pdf');
 
 const crypto = require('crypto');
 
@@ -33,8 +34,9 @@ app.post("/request-quote", async (req, res) => {
         let { email, ValuesArr } = req.body;
 
         let ProcessID = generateSecureString()
-        let GeneratePdf = await BuildPdf(email, ProcessID, ValuesArr)
-        
+        let GeneratePdf = await BuildPdf(ProcessID, ValuesArr)
+        await SendEmailWithAttachment(email, ProcessID)
+        await DeleteReportPDF(ProcessID)
 
         res.send("Sent")
 
@@ -159,7 +161,7 @@ async function SendEmailWithAttachment(email, ProcessID) {
 
 }
 
-async function BuildPdf(email, ProcessID, ValuesArr) {
+async function BuildPdf(ProcessID, ValuesArr) {
 
     var html = `
 <!DOCTYPE html>
@@ -477,39 +479,13 @@ async function BuildPdf(email, ProcessID, ValuesArr) {
 </body>
 </html>
 `
-    // var options = {
-    //     format: "A3",
-    //     orientation: "portrait",
-    //     border: "10mm",
-    // };
 
-    // var users = [
-    //     {
-    //         name: "Shyam",
-    //         age: "26",
-    //     }
-    // ];
+   await createPDF(`./Reports/${ProcessID}.pdf`)
 
-    // var document = {
-    //     html: html,
-    //     data: {
-    //         users: users,
-    //     },
-    //     path: `./Reports/${ProcessID}.pdf`,
-    //     type: "",
-    // };
-
-    // console.log(`Here till`);
-    // await pdf.create(document, options)
-
-
-    const options = { format: 'A4' };
-
-    pdf.create(html, options).toFile(`./Reports/${ProcessID}.pdf`, async function (err, res) {
-        if (err) return console.log(err);
-        await SendEmailWithAttachment(email, ProcessID)
-        await DeleteReportPDF(ProcessID)
-    });
+    // pdf.create(html, options).toFile(`./Reports/${ProcessID}.pdf`, async function (err, res) {
+    //     if (err) return console.log(err);
+        
+    // });
 
 }
 
@@ -522,7 +498,6 @@ function generateSecureString(length = 32) {
     return buffer.toString('hex').slice(0, length);
 }
 
-
 app.listen(PORT, (error) => {
     if (!error) {
         console.log("Server is Successfully Running, and App is listening on port " + PORT)
@@ -531,3 +506,126 @@ app.listen(PORT, (error) => {
     }
 
 });
+
+
+
+// Function to write the PDF file
+function writePDF(doc, filePath) {
+  return new Promise((resolve, reject) => {
+    const stream = fs.createWriteStream(filePath);
+    doc.pipe(stream);
+    doc.end();
+    stream.on('finish', resolve);
+    stream.on('error', reject);
+  });
+}
+
+// Function to draw a table with a rounded border for the entire table
+async function drawTable(doc, table, startX, startY) {
+    const rowHeight = 30;
+  const colWidth = doc.page.width / 3;
+  const tableWidth = colWidth * 2;
+
+  // Center the table on the page
+  const pageWidth = doc.page.width;
+  const centeredStartX = (pageWidth - tableWidth) / 2;
+
+  // Draw title
+  doc
+    .fontSize(18)
+    .fillColor('black')
+    .text(table.title, centeredStartX, startY, { width: tableWidth, align: 'center' });
+
+  startY += rowHeight;
+
+  // Draw rows
+  table.rows.forEach((row, rowIndex) => {
+    row.forEach((cell, cellIndex) => {
+      const cellX = centeredStartX + colWidth * cellIndex;
+      const cellY = startY + rowHeight * rowIndex;
+
+      // Set background color for the cell with border radius
+      doc
+        .roundedRect(cellX, cellY, colWidth, rowHeight, 2)
+        .fill('#6454d0')
+        .stroke();
+
+      // Draw the border of the cell with border radius
+      doc
+        .roundedRect(cellX, cellY, colWidth, rowHeight, 2)
+        // .fill('white')
+        .stroke();
+
+      // Set white color for the text
+      doc
+        .fillColor('white')
+        .fontSize(12)
+        .text(cell, cellX + 10, cellY + 10, {
+          width: colWidth - 20,
+          align: 'center',
+        });
+    });
+  });
+
+  return startY + rowHeight * table.rows.length;
+}
+
+// Main function to create the PDF
+async function createPDF(fileAddress) {
+  const doc = new PDFDocument({ margin: 50 });
+
+  // Define table data
+  const tables = [
+    {
+      title: 'Table 1',
+      rows: [
+        ['Header 1', 'Header 2'],
+        ['Row 1, Column 1', 'Row 1, Column 2'],
+        ['Row 2, Column 1', 'Row 2, Column 2'],
+      ],
+    },
+    {
+      title: 'Table 2',
+      rows: [
+        ['Row 2, Column 1', 'Row 2, Column 2'],
+        ['Row 3, Column 1', 'Row 3, Column 2'],
+        ['Row 4, Column 1', 'Row 4, Column 2'],
+        ['Row 5, Column 1', 'Row 5, Column 2'],
+      ],
+    },
+    {
+      title: 'Table 3',
+      rows: [
+        ['Row 3, Column 1', 'Row 3, Column 2'],
+        ['Row 4, Column 1', 'Row 4, Column 2'],
+        ['Row 5, Column 1', 'Row 5, Column 2'],
+      ],
+    },
+    {
+      title: 'Table 4',
+      rows: [
+        ['Header 1', 'Header 2'],
+        ['Row 1, Column 1', 'Row 1, Column 2'],
+        ['Row 2, Column 1', 'Row 2, Column 2'],
+        ['Row 3, Column 1', 'Row 3, Column 2'],
+        ['Row 5, Column 1', 'Row 5, Column 2'],
+      ],
+    },
+  ];
+
+  // Add a title
+  doc
+    .fontSize(24)
+    .text('Report', {
+      align: 'center',
+    });
+
+  // Draw each table with spacing
+  let currentY = doc.y;
+  for (const table of tables) {
+    currentY = await drawTable(doc, table, 50, currentY + 20);
+  }
+
+  // Finalize PDF file
+  await writePDF(doc, fileAddress);
+}
