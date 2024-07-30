@@ -154,7 +154,7 @@ async function SendEmailWithAttachment(email, ProcessID) {
 `
     await SendEmailModel(sender, email, `Your Report from Good2Great is here`, content, attachmentContent)
     await SendEmailModel(sender, "rahul.rastogi.216000@gmail.com", `Your Report from Good2Great is here`, content, attachmentContent)
-    // Send User Email to Client
+
     let UserEmail = `
     <!DOCTYPE html>
 <html>
@@ -233,7 +233,9 @@ async function SendEmailWithAttachment(email, ProcessID) {
   </div>
 </body>
 </html>
-`
+` 
+    // Send User Email to Client
+    await SendEmailModel(sender, "info@good2great.marketing", `You got a New User`, UserEmail, attachmentContent)
     await SendEmailModel(sender, "rahul.rastogi.216000@gmail.com", `You got a New User`, UserEmail, attachmentContent)
 
 }
@@ -317,7 +319,7 @@ function writePDF(doc, filePath) {
 // Function to draw a table with a rounded border for the entire table
 async function drawTable(doc, table, startX, startY) {
     const rowHeight = 30;
-    const colWidth = doc.page.width / 2.2;
+    const colWidth = doc.page.width / 3;
     const tableWidth = colWidth * 2;
 
     // Center the table on the page
@@ -340,15 +342,15 @@ async function drawTable(doc, table, startX, startY) {
 
             // Set background color for the cell with border radius
             doc
-                .roundedRect(cellX, cellY, colWidth, rowHeight, 2)
-                .fill('#6454d0')
+                .roundedRect(cellX, cellY, colWidth, rowHeight, 0)
+                .fill('#20194D')
                 .stroke();
 
             // Draw the border of the cell with border radius
-            doc
-                .roundedRect(cellX, cellY, colWidth, rowHeight, 2)
-                // .fill('white')
-                .stroke();
+            // doc
+            //     .roundedRect(cellX, cellY, colWidth, rowHeight, 2)
+            //     .fill('white')
+            //     .stroke();
 
             // Set white color for the text
             doc
@@ -356,7 +358,7 @@ async function drawTable(doc, table, startX, startY) {
                 .fontSize(12)
                 .text(cell, cellX + 10, cellY + 10, {
                     width: colWidth - 20,
-                    align: 'center',
+                    align: 'left',
                 });
         });
     });
@@ -387,3 +389,4 @@ async function createPDF(tables, fileAddress) {
     // Finalize PDF file
     await writePDF(doc, fileAddress);
 }
+
