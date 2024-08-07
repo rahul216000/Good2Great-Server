@@ -79,7 +79,7 @@ async function SendEmailWithAttachment(email, ProcessID) {
       overflow: hidden;
     }
     .header {
-      background-color: #6252CE;
+      background-color: #20194D;
       color: #ffffff;
       padding: 20px;
       text-align: center;
@@ -102,9 +102,10 @@ async function SendEmailWithAttachment(email, ProcessID) {
     .report-section {
       margin-top: 20px;
       padding: 10px;
-      background-color: #6454d0;
+      background-color: #20194D;
       border: 1px solid #ddd;
       border-radius: 4px;
+      color: #ffffff;
     }
     .report-section h3 {
       font-size: 18px;
@@ -140,14 +141,7 @@ async function SendEmailWithAttachment(email, ProcessID) {
         </p>
       </div>
     </div>
-    <div class="footer">
-      <p>
-        If you have any questions, feel free to contact us</a>.
-      </p>
-      <p>
-      Copyright © 2024 GOOD2GREATMARKETING
-      </p>
-    </div>
+    
   </div>
 </body>
 </html>
@@ -319,7 +313,7 @@ function writePDF(doc, filePath) {
 // Function to draw a table with a rounded border for the entire table
 async function drawTable(doc, table, startX, startY) {
     const rowHeight = 30;
-    const colWidth = doc.page.width / 3;
+    const colWidth = doc.page.width / 2.25;
     const tableWidth = colWidth * 2;
 
     // Center the table on the page
